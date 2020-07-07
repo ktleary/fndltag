@@ -18,7 +18,7 @@ class TestLtags(TestCase):
             'text2.txt', 'text3.txt'
         ]
         self.words = "tagging tag labels label control"
-        self.doc = "# Title 1 \n #tagging, #labels, #tag, #label, #control"
+        self.tagged_doc = '# Title 1 \n #tagging, #labels, #tag, #label, #control'
 
     def test_ltags_returntype(self):
         # test pholoc findExifFile return type is dictionary
@@ -30,10 +30,17 @@ class TestLtags(TestCase):
         lemmas = fndltag.getlemmas(doc)
         self.assertEqual(True, "tag" in lemmas and "tagging" not in lemmas)
 
-    # def test_lemmatize(self):
-    # with tempfile.TemporaryDirectory as fp:
-    # with tempfile.TemporaryFile() as fp:
-    # fp.write(self.doc)
+    def test_get_ltags_paths(self):
+        basename = "test"
+        ext = ".md"
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            path = Path(tmpdirname, str(basename) + ext)
+            with open(path, mode='a') as tag_file:
+                tag_file.write(self.tagged_doc)
+                tag_file.close()
+
+            ltag_paths = fndltag.get_ltags_paths(tmpdirname, self.exts)
+            self.assertEqual(True, "label" in ltag_paths)
 
 
 class TestListFiles(TestCase):
