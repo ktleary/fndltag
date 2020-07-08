@@ -1,46 +1,45 @@
 import tempfile
 import spacy
+import re
 from pathlib import Path
 from unittest import TestCase
 import fndltag
-import json
 
 nlp = spacy.load("en_core_web_sm")
 
 
-class TestLtags(TestCase):
+class TestLemmTagPaths(TestCase):
     def setUp(self):
-        self.name = 'test ltags'
-        self.tmpdir = tempfile.TemporaryDirectory()
+        self.tag_regex = re.compile('#([\\d\\w]+)')
         self.exts = ['.md', '.txt']
-        self.filenames = [
-            'markdown1.md', 'markdown2.md', 'markdown3.md', 'text1.txt',
-            'text2.txt', 'text3.txt'
-        ]
-        self.words = "tagging tag labels label control"
-        self.tagged_doc = '# Title 1 \n #tagging, #labels, #tag, #label, #control'
 
-    def test_ltags_returntype(self):
-        # test pholoc findExifFile return type is dictionary
-        result = fndltag.ltag(self.tmpdir.name, self.exts)
+    def test_isdict(self):
+        directory = tempfile.TemporaryDirectory()
+        result = fndltag.taglemmas_paths(directory.name, self.exts,
+                                         self.tag_regex)
         self.assertEqual(True, isinstance(result, dict))
 
     def test_lemmatize(self):
-        doc = nlp(self.words)
-        lemmas = fndltag.getlemmas(doc)
+        words = "tagging tag labels label control"
+        doc = nlp(words)
+        lemmas = fndltag.lemmatize(doc)
         self.assertEqual(True, "tag" in lemmas and "tagging" not in lemmas)
 
-    def test_get_ltags_paths(self):
+    def test_ltags_paths(self):
         basename = "test"
-        ext = ".md"
+        testext = ".md"
+        tagged_doc = '# Title 1 \n #tagging, #labels, #tag, #label'
+
         with tempfile.TemporaryDirectory() as tmpdirname:
-            path = Path(tmpdirname, str(basename) + ext)
+            path = Path(tmpdirname, str(basename) + testext)
             with open(path, mode='a') as tag_file:
-                tag_file.write(self.tagged_doc)
+                tag_file.write(tagged_doc)
                 tag_file.close()
 
-            ltag_paths = fndltag.get_ltags_paths(tmpdirname, self.exts)
-            self.assertEqual(True, "label" in ltag_paths)
+            ltag_paths = fndltag.taglemmas_paths(tmpdirname, self.exts,
+                                                 self.tag_regex)
+            self.assertEqual(True, str(path) in ltag_paths["tag"])
+            self.assertEqual(True, "labels" not in ltag_paths)
 
 
 class TestListFiles(TestCase):
@@ -63,43 +62,3 @@ class TestListFiles(TestCase):
 
             files_found = fndltag.listfiles(tmpdirname, ['.txt', '.md'])
             self.assertEqual(filepaths, files_found)
-
-
-'''
-with TemporaryDirectory() as tmpdirname:
-        ext = ".md"
-        basename = "201906242157"
-        filepaths = []
-        for i in range(3):
-            path = Path(tmpdirname, basename + str(i) + ext)
-            path.touch()
-            filepaths.append(str(path))
-
-
->>> import tempfile
-
-# create a temporary file and write some data to it
->>> fp = tempfile.TemporaryFile()
->>> fp.write(b'Hello world!')
-# read data from file
->>> fp.seek(0)
->>> fp.read()
-b'Hello world!'
-# close the file, it will be removed
->>> fp.close()
-
-# create a temporary file using a context manager
->>> with tempfile.TemporaryFile() as fp:
-...     fp.write(b'Hello world!')
-...     fp.seek(0)
-...     fp.read()
-b'Hello world!'
->>>
-# file is now closed and removed
-
-# create a temporary directory using the context manager
->>> with tempfile.TemporaryDirectory() as tmpdirname:
-...     print('created temporary directory', tmpdirname)
->>>
-# directory and contents have been removed
-'''

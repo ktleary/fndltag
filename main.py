@@ -1,16 +1,15 @@
-from hconfig.py import directories
+import sys
+import fndltag
+import json
+
 
 def main():
-    options = getOptions(sys.argv[1:])
-    files = listFiles(options.directory, "*.md")
-    findTags(files)
-    for tagslist in tagslists:
-        for tag in tagslist:
-            tags.append(tag)
-    tagset = sorted(list(set(tags)))
-    doc = nlp(" ".join(tagset))
-    lemmas = lemmatize(doc)
-    print(lemmas)
+    import re
+    regex = re.compile('#([\\d\\w]+)')
+    directory = '/tmp/process'
+    exts = ['.md', '.txt']
+    ltags_filepaths = fndltag.taglemmas_paths(directory, exts, regex)
+    print(json.dumps(ltags_filepaths, indent=4, sort_keys=True))
 
 
 if __name__ == "__main__":
